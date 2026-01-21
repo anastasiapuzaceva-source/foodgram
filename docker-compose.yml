@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  backend:
+    build: ./backend
+    env_file:
+      - .env
+    volumes:
+      - static:/app/collected_static/static
+      - media:/app/media
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    command: >
+      sh -c "npm run build && cp -r /app/build/* /frontend_build/ && tail -f /dev/null"
+    volumes:
+      - frontend_build:/frontend_build
+
+
+  gateway:
+    build: ./infra/
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - static:/static
+      - media:/media
+      - frontend_build:/usr/share/nginx/html
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  pg_data:
+  static:
+  media:
+  frontend_build:
