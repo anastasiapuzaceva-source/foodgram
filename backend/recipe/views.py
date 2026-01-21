@@ -56,23 +56,25 @@ class UserViewSet(ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, pk=None):
-        author = get_object_or_404(User, pk=pk)
         user = request.user
+        author = get_object_or_404(User, pk=pk)
         if request.method == 'POST':
-            Subscription.objects.get_or_create(
-                user=user,
-                author=author
-            )
+            if user == author:
+                return Response(
+                    {'errors': 'Нельзя подписаться на самого себя'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if Subscription.objects.filter(user=user, author=author).exists():
+                return Response(
+                    {'errors': 'Вы уже подписаны на этого пользователя'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            Subscription.objects.create(user=user, author=author)
             serializer = UserSubscriptionSerializer(
                 author,
                 context={'request': request}
             )
-            return Response(serializer.data, status=201)
-        Subscription.objects.filter(
-            user=user,
-            author=author
-        ).delete()
-        return Response(status=204)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         detail=False,

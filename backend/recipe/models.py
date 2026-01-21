@@ -60,6 +60,9 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
         verbose_name = 'Ингредиент'
 
+    def __str__(self):
+        return self.name
+
 
 class Recipe(models.Model):
     name = models.CharField(
