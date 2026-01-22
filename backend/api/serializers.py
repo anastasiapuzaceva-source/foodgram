@@ -6,9 +6,9 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .models import (
-    Ingredient, Tag, Recipe, RecipeIngredient, User, UserAvatar
-)
+from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient
+
+from users.models import User, UserAvatar
 
 
 class Base64ImageField(serializers.ImageField):

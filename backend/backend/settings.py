@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'recipe.apps.RecipeConfig',
+    'users',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -147,10 +149,10 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_ID_FIELD': 'id',
     'SERIALIZERS': {
-        'user': 'recipe.serializers.UserSerializer',
-        'current_user': 'recipe.serializers.UserSerializer',
+        'user': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer',
     },
 }
 
 
-AUTH_USER_MODEL = 'recipe.User'
+AUTH_USER_MODEL = 'users.User'

@@ -13,9 +13,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
-from .models import (
+from recipe.models import (
     Tag, Ingredient, Recipe,
-    ShoppingCart, UserAvatar, User, RecipeIngredient, Subscription, Favorite
+    ShoppingCart, RecipeIngredient, Favorite
 )
 from .serializers import (
     RecipeReadSerializer,
@@ -26,6 +26,7 @@ from .serializers import (
     UserSerializer,
     UserSubscriptionSerializer
 )
+from users.models import UserAvatar, User, Subscription
 
 
 class UserAvatarView(APIView):
