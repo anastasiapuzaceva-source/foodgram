@@ -77,12 +77,22 @@ class UserViewSet(ModelViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+        subscription = Subscription.objects.filter(
+            user=user,
+            author=author
+        )
+        if not subscription.exists():
+            return Response(
+                {'errors': 'Вы не подписаны на этого пользователя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        subscription.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(
         detail=False,
         methods=['get'],
         permission_classes=[IsAuthenticated],
-        url_path='subscriptions',
-        url_name='subscriptions'
     )
     def subscriptions(self, request):
         user = request.user

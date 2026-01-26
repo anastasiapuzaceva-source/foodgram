@@ -9,12 +9,15 @@ from api.views import (
 )
 
 router = DefaultRouter()
-router.register('users', UserViewSet)
+router.register('custom_users', UserViewSet, basename='custom-users')
 router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
 router.register('recipes', RecipeViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
     path('users/me/avatar/', UserAvatarView.as_view()),
+    path('', include(router.urls)),
+    path('users/', include('djoser.urls')),
+    path('users/', include('djoser.urls.authtoken')),
 ]
+
