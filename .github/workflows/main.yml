@@ -107,6 +107,7 @@ jobs:
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
+            sleep 10
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate --no-input
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
 
