@@ -10,7 +10,7 @@ services:
       - .env
 
   backend:
-    image: meyr1n27//foodgram_backend:latest
+    image: meyr1n27/foodgram_backend:latest
     restart: always
     env_file:
       - .env
@@ -21,14 +21,14 @@ services:
       - db
 
   frontend:
-    image: meyr1n27//foodgram_frontend:latest
+    image: meyr1n27/foodgram_frontend:latest
     command: >
       sh -c "cp -r /app/build/* /frontend_build/"
     volumes:
       - frontend_build:/frontend_build
 
   gateway:
-    image: meyr1n27//foodgram_gatewey:latest
+    image: meyr1n27/foodgram_gatewey:latest
     restart: always
     ports:
       - "7000:80"
