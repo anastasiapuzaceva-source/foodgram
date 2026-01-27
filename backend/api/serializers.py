@@ -200,6 +200,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -216,6 +217,12 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
     def get_is_favorited(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
@@ -230,6 +237,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Recipe
         fields = (
@@ -238,3 +247,9 @@ class RecipeShortSerializer(serializers.ModelSerializer):
             'image',
             'cooking_time',
         )
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
+        return None
