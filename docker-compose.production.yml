@@ -28,7 +28,7 @@ services:
       - frontend_build:/frontend_build
 
   gateway:
-    image: meyr1n27/foodgram_gatewey:latest
+    image: meyr1n27/foodgram_gateway:latest
     restart: always
     ports:
       - "7000:80"
