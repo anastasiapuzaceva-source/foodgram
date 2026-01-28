@@ -6,6 +6,10 @@ from api.views import UserViewSet
 urlpatterns = [
     path('admin/', admin.site.urls),
     path(
+        'api/users/<int:pk>/',
+        UserViewSet.as_view({'get': 'retrieve'}),
+    ),
+    path(
         'api/users/subscriptions/',
         UserViewSet.as_view({'get': 'subscriptions'}),
     ),
