@@ -1,5 +1,4 @@
 import django_filters
-from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -8,11 +7,13 @@ from recipe.models import (
     ShoppingCart, RecipeIngredient, Favorite
 )
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+    AllowAny
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
@@ -31,6 +32,7 @@ from .serializers import (
 
 class UserAvatarView(APIView):
     permission_classes = (IsAuthenticated,)
+
     def put(self, request):
         avatar, _ = UserAvatar.objects.get_or_create(
             user=request.user
@@ -42,6 +44,7 @@ class UserAvatarView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
     def delete(self, request):
         UserAvatar.objects.filter(user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -249,7 +252,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe=recipe
             ).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
 
     @action(
         detail=False,

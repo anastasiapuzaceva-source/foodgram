@@ -1,9 +1,7 @@
 import base64
 
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
 from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient
@@ -64,6 +62,7 @@ class UserCreateSerializer(BaseUserCreateSerializer):
                     'Использовать username "me" запрещено.'
                 )
             return value
+
         def validate_first_name(self, value):
             if not value.strip():
                 raise serializers.ValidationError(
