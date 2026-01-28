@@ -4,10 +4,10 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
 from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient
-
+from rest_framework import serializers
 from users.models import User, UserAvatar
 
 
@@ -44,6 +44,39 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_shopping_cart_count(self, obj):
         return obj.shopping_cart.count()
+
+
+class UserCreateSerializer(BaseUserCreateSerializer):
+    class Meta(BaseUserCreateSerializer.Meta):
+        model = User
+        fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        )
+
+        def validate_username(self, value):
+            if value.lower() == 'me':
+                raise serializers.ValidationError(
+                    'Использовать username "me" запрещено.'
+                )
+            return value
+        def validate_first_name(self, value):
+            if not value.strip():
+                raise serializers.ValidationError(
+                    'Имя не может быть пустым.'
+                )
+            return value
+
+        def validate_last_name(self, value):
+            if not value.strip():
+                raise serializers.ValidationError(
+                    'Фамилия не может быть пустой.'
+                )
+            return value
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
