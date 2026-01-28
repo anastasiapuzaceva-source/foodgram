@@ -20,4 +20,3 @@ urlpatterns = [
     path('users/', include('djoser.urls')),
     path('users/', include('djoser.urls.authtoken')),
 ]
-
