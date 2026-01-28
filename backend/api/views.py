@@ -3,19 +3,20 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
+from recipe.models import (
+    Tag, Ingredient, Recipe,
+    ShoppingCart, RecipeIngredient, Favorite
+)
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from users.models import UserAvatar, User, Subscription
 
-from recipe.models import (
-    Tag, Ingredient, Recipe,
-    ShoppingCart, RecipeIngredient, Favorite
-)
 from .serializers import (
     RecipeReadSerializer,
     CreateRecipeSerializer,
@@ -25,7 +26,6 @@ from .serializers import (
     UserSerializer,
     UserSubscriptionSerializer
 )
-from users.models import UserAvatar, User, Subscription
 
 
 class UserAvatarView(APIView):
@@ -118,8 +118,8 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name',)
+    filter_backends = (SearchFilter,)
+    search_fields = ('^name',)
     permission_classes = [AllowAny]
 
 
