@@ -9,6 +9,7 @@ from recipe.models import (
 )
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
