@@ -53,6 +53,7 @@ class UserAvatarView(APIView):
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = (AllowAny,)
 
     @action(
         detail=True,
