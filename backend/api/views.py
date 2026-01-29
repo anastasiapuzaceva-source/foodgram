@@ -6,6 +6,7 @@ from recipe.models import (
     Tag, Ingredient, Recipe,
     ShoppingCart, RecipeIngredient, Favorite
 )
+from rest_framework.exceptions import NotFound
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
@@ -26,7 +27,8 @@ from .serializers import (
     IngredientSerializer,
     UserAvatarSerializer,
     UserSerializer,
-    UserSubscriptionSerializer
+    UserSubscriptionSerializer,
+    UserCreateSerializer
 )
 
 
@@ -52,8 +54,12 @@ class UserAvatarView(APIView):
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
     permission_classes = (AllowAny,)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserCreateSerializer
+        return UserSerializer
 
     @action(
         detail=True,
@@ -110,6 +116,18 @@ class UserViewSet(ModelViewSet):
             context={'request': request}
         )
         return self.get_paginated_response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request):
+        serializer = UserSerializer(
+            request.user,
+            context={'request': request}
+        )
+        return Response(serializer.data)
 
 
 class TagViewSet(ReadOnlyModelViewSet):

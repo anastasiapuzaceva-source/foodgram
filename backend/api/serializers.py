@@ -4,9 +4,9 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
-from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient
+from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient, ShoppingCart, Favorite
 from rest_framework import serializers
-from users.models import User, UserAvatar
+from users.models import User, UserAvatar, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
@@ -23,6 +23,7 @@ class Base64ImageField(serializers.ImageField):
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -33,12 +34,20 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'avatar',
+            'is_subscribed'
         )
 
     def get_avatar(self, obj):
-        if hasattr(obj, 'avatar'):
+        try:
             return obj.avatar.avatar.url
-        return None
+        except UserAvatar.DoesNotExist:
+            return None
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        return obj.subscribers.filter(user=request.user).exists()
 
     def get_shopping_cart_count(self, obj):
         return obj.shopping_cart.count()
@@ -56,26 +65,27 @@ class UserCreateSerializer(BaseUserCreateSerializer):
             'password',
         )
 
-        def validate_username(self, value):
-            if value.lower() == 'me':
-                raise serializers.ValidationError(
-                    'Использовать username "me" запрещено.'
-                )
-            return value
+    def validate_username(self, value):
+        if value.lower() == 'me':
+            raise serializers.ValidationError(
+                'Использовать username "me" запрещено.'
+            )
+        return value
 
-        def validate_first_name(self, value):
-            if not value.strip():
-                raise serializers.ValidationError(
-                    'Имя не может быть пустым.'
-                )
-            return value
+    def validate_first_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError(
+                'Имя не может быть пустым.'
+            )
+        return value
 
-        def validate_last_name(self, value):
-            if not value.strip():
-                raise serializers.ValidationError(
-                    'Фамилия не может быть пустой.'
-                )
-            return value
+    def validate_last_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError(
+                'Фамилия не может быть пустой.'
+            )
+        return value
+
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
@@ -170,27 +180,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        ingredients_data = validated_data.pop('ingredients', None)
-        tags = validated_data.pop('tags', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        if tags is not None:
-            instance.tags.set(tags)
-        if ingredients_data is not None:
-            instance.ingredients.clear()
-            RecipeIngredient.objects.bulk_create([
-                RecipeIngredient(
-                    recipe=instance,
-                    ingredient=item['id'],
-                    amount=item['amount']
-                )
-                for item in ingredients_data
-            ])
-        return instance
 
     def validate_ingredients(self, value):
         if not value:
