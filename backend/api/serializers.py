@@ -2,7 +2,6 @@ import base64
 import re
 
 from django.core.files.base import ContentFile
-from django.db import transaction
 from djoser.serializers import (
     UserCreateSerializer as DjoserUserCreateSerializer
 )
