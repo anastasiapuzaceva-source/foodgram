@@ -3,12 +3,20 @@ import re
 
 from django.core.files.base import ContentFile
 from django.db import transaction
-from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
-
-from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient, ShoppingCart, Favorite
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer
+)
+from recipe.models import (
+    Recipe,
+    Ingredient,
+    Tag,
+    RecipeIngredient,
+    ShoppingCart,
+    Favorite
+)
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
-from users.models import User, Subscription
+from rest_framework.validators import UniqueValidator
+from users.models import User
 
 
 class Base64ImageField(serializers.ImageField):
@@ -21,6 +29,7 @@ class Base64ImageField(serializers.ImageField):
                 name=f'temp.{ext}'
             )
         return super().to_internal_value(data)
+
 
 class UserAvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True)

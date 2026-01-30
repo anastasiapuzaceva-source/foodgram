@@ -2,14 +2,13 @@ import django_filters
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from recipe.models import (
     Tag, Ingredient, Recipe,
     ShoppingCart, RecipeIngredient, Favorite
 )
-from rest_framework.exceptions import NotFound
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
@@ -38,6 +37,7 @@ from .serializers import (
 
 class UserAvatarView(APIView):
     permission_classes = (IsAuthenticated,)
+
     def put(self, request):
         serializer = UserAvatarSerializer(
             request.user,
@@ -268,11 +268,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(
-                RecipeShortSerializer(recipe, context={'request': request}).data,
+                RecipeShortSerializer(
+                    recipe, context={'request': request}
+                ).data,
                 status=status.HTTP_201_CREATED
             )
         if request.method == 'DELETE':
-            if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+            if not ShoppingCart.objects.filter(
+                    user=user, recipe=recipe
+            ).exists():
                 return Response(
                     {'errors': 'Рецепта нет в корзине покупок'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -342,7 +346,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(
-                RecipeShortSerializer(recipe, context={'request': request}).data,
+                RecipeShortSerializer(
+                    recipe, context={'request': request}
+                ).data,
                 status=status.HTTP_201_CREATED
             )
         if request.method == 'DELETE':
