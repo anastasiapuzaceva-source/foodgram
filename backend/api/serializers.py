@@ -8,7 +8,7 @@ from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerialize
 from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient, ShoppingCart, Favorite
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
-from users.models import User, UserAvatar, Subscription
+from users.models import User, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
@@ -22,9 +22,15 @@ class Base64ImageField(serializers.ImageField):
             )
         return super().to_internal_value(data)
 
+class UserAvatarSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField()
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
+
 
 class UserSerializer(serializers.ModelSerializer):
-    avatar = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -38,12 +44,6 @@ class UserSerializer(serializers.ModelSerializer):
             'avatar',
             'is_subscribed'
         )
-
-    def get_avatar(self, obj):
-        try:
-            return obj.avatar.avatar.url
-        except UserAvatar.DoesNotExist:
-            return None
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -138,13 +138,14 @@ class UserAvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField()
 
     class Meta:
-        model = UserAvatar
+        model = User
         fields = ('avatar',)
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -156,7 +157,15 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             'last_name',
             'recipes',
             'recipes_count',
+            'avatar',
+            'is_subscribed'
         )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        return obj.subscribers.filter(user=request.user).exists()
 
     def get_recipes(self, obj):
         request = self.context['request']
@@ -373,7 +382,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
             recipe=recipe
         ).exists():
             raise serializers.ValidationError(
-                'Рецепт уже добавлен в корзину'
+                'Рецепт уже добавлен в список покупок'
             )
         return attrs
 

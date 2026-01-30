@@ -7,24 +7,15 @@ class User(AbstractUser):
         'email address',
         unique=True
     )
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
 
-
-class UserAvatar(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='avatar',
-        verbose_name='Пользователь'
-    )
     avatar = models.ImageField(
         upload_to='users/avatar/',
-        verbose_name='Аватар')
+        null=True,
+        blank=True
+    )
 
-    class Meta:
-        verbose_name_plural = 'Аватары'
-        verbose_name = 'Аватар'
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
 
 class Subscription(models.Model):

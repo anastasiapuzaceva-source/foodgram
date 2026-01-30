@@ -18,7 +18,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from users.models import UserAvatar, User, Subscription
+from users.models import User, Subscription
 
 from .permission import IsAuthorOrReadOnly
 from .serializers import (
@@ -38,21 +38,18 @@ from .serializers import (
 
 class UserAvatarView(APIView):
     permission_classes = (IsAuthenticated,)
-
     def put(self, request):
-        avatar, _ = UserAvatar.objects.get_or_create(
-            user=request.user
-        )
         serializer = UserAvatarSerializer(
-            avatar,
-            data=request.data
+            request.user,
+            data=request.data,
+            partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def delete(self, request):
-        UserAvatar.objects.filter(user=request.user).delete()
+        request.user.avatar.delete(save=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
