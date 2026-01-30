@@ -10,6 +10,10 @@ urlpatterns = [
         UserViewSet.as_view({'get': 'retrieve'}),
     ),
     path(
+        'api/users/me/',
+        UserViewSet.as_view({'get': 'me'}),
+    ),
+    path(
         'api/users/subscriptions/',
         UserViewSet.as_view({'get': 'subscriptions'}),
     ),
@@ -22,6 +26,5 @@ urlpatterns = [
     ),
     path('api/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.authtoken')),
-
     path('api/', include('api.urls')),
 ]

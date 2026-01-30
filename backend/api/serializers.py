@@ -23,7 +23,7 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 class UserAvatarSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField()
+    avatar = Base64ImageField(required=True)
 
     class Meta:
         model = User
@@ -131,15 +131,6 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
             user.save()
 
         return user
-
-
-
-class UserAvatarSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField()
-
-    class Meta:
-        model = User
-        fields = ('avatar',)
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):

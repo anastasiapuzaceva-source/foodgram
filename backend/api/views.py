@@ -42,11 +42,11 @@ class UserAvatarView(APIView):
         serializer = UserAvatarSerializer(
             request.user,
             data=request.data,
-            partial=True
+            context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request):
         request.user.avatar.delete(save=True)
@@ -56,6 +56,11 @@ class UserAvatarView(APIView):
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     permission_classes = (IsAuthenticated,)
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [AllowAny()]
+        return super().get_permissions()
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -267,6 +272,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED
             )
         if request.method == 'DELETE':
+            if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': 'Рецепта нет в корзине покупок'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             ShoppingCart.objects.filter(
                 user=user,
                 recipe=recipe
@@ -335,8 +345,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 RecipeShortSerializer(recipe, context={'request': request}).data,
                 status=status.HTTP_201_CREATED
             )
-        Favorite.objects.filter(
-            user=user,
-            recipe=recipe
-        ).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'DELETE':
+            if not Favorite.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': 'Рецепта нет в избранном'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            Favorite.objects.filter(
+                user=user,
+                recipe=recipe
+            ).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
