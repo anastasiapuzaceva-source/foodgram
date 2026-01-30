@@ -1,11 +1,13 @@
 import base64
+import re
 
 from django.core.files.base import ContentFile
 from django.db import transaction
-from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
+from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
 
 from recipe.models import Recipe, Ingredient, Tag, RecipeIngredient, ShoppingCart, Favorite
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 from users.models import User, UserAvatar, Subscription
 
 
@@ -53,8 +55,22 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.shopping_cart.count()
 
 
-class UserCreateSerializer(BaseUserCreateSerializer):
-    class Meta(BaseUserCreateSerializer.Meta):
+class UserCreateSerializer(DjoserUserCreateSerializer):
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    email = serializers.EmailField(
+        required=True,
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+
+    class Meta(DjoserUserCreateSerializer.Meta):
         model = User
         fields = (
             'id',
@@ -64,27 +80,57 @@ class UserCreateSerializer(BaseUserCreateSerializer):
             'last_name',
             'password',
         )
+        extra_kwargs = {
+            'email': {'validators': []},
+            'username': {'validators': []},
+            'password': {'write_only': True},
+        }
 
     def validate_username(self, value):
+        if not bool(re.match(r'^[\w.@+-]+$', value)):
+            raise serializers.ValidationError(
+                'Поле содержит недопустимые символы'
+            )
+
         if value.lower() == 'me':
             raise serializers.ValidationError(
                 'Использовать username "me" запрещено.'
             )
+
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                'Поле "Имя пользователя" не  должно превышать 150 символов'
+            )
         return value
 
     def validate_first_name(self, value):
-        if not value.strip():
+        if len(value) > 150:
             raise serializers.ValidationError(
-                'Имя не может быть пустым.'
+                'Поле "Имя" не  должно превышать 150 символов'
             )
         return value
 
     def validate_last_name(self, value):
-        if not value.strip():
+        if len(value) > 150:
             raise serializers.ValidationError(
-                'Фамилия не может быть пустой.'
+                'Поле "Фамилия" не  должно превышать 150 символов'
             )
         return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+
+        user, created = User.objects.get_or_create(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            defaults=validated_data,
+        )
+
+        if created:
+            user.set_password(password)
+            user.save()
+
+        return user
 
 
 
@@ -160,12 +206,15 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientWriteSerializer(many=True)
+    ingredients = RecipeIngredientWriteSerializer(
+        many=True,
+        required=True,
+    )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True,
         required=True,
-        allow_empty=False
+        allow_empty=False,
     )
     image = Base64ImageField()
 
@@ -198,6 +247,12 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Нужно указать хотя бы один тег.'
             )
+
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError(
+                'Теги не должны повторяться'
+            )
+
         return value
 
     def create(self, validated_data):
@@ -214,6 +269,34 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             for item in ingredients_data
         ])
         return recipe
+
+    def update(self, instance, validated_data):
+        if 'ingredients' not in validated_data:
+            raise serializers.ValidationError(
+                {'ingredients': 'Обязательное поле.'}
+            )
+        if 'tags' not in validated_data:
+            raise serializers.ValidationError(
+                {'tags': 'Обязательное поле.'}
+            )
+        ingredients_data = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if tags is not None:
+            instance.tags.set(tags)
+        if ingredients_data is not None:
+            instance.recipe_ingredients.all().delete()
+            RecipeIngredient.objects.bulk_create([
+                RecipeIngredient(
+                    recipe=instance,
+                    ingredient=item['id'],
+                    amount=item['amount']
+                )
+                for item in ingredients_data
+            ])
+        return instance
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
@@ -274,3 +357,41 @@ class RecipeShortSerializer(serializers.ModelSerializer):
         if obj.image:
             return obj.image.url
         return None
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('recipe',)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+        if ShoppingCart.objects.filter(
+            user=user,
+            recipe=recipe
+        ).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в корзину'
+            )
+        return attrs
+
+
+class FavoriteRecipeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Favorite
+        fields = ('recipe',)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+        if Favorite.objects.filter(
+            user=user,
+            recipe=recipe
+        ).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в избранное'
+            )
+        return attrs

@@ -20,6 +20,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from users.models import UserAvatar, User, Subscription
 
+from .permission import IsAuthorOrReadOnly
 from .serializers import (
     RecipeReadSerializer,
     CreateRecipeSerializer,
@@ -28,7 +29,10 @@ from .serializers import (
     UserAvatarSerializer,
     UserSerializer,
     UserSubscriptionSerializer,
-    UserCreateSerializer
+    UserCreateSerializer,
+    ShoppingCartSerializer,
+    RecipeShortSerializer,
+    FavoriteRecipeSerializer
 )
 
 
@@ -54,7 +58,7 @@ class UserAvatarView(APIView):
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -64,7 +68,6 @@ class UserViewSet(ModelViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, pk=None):
         user = request.user
@@ -102,7 +105,6 @@ class UserViewSet(ModelViewSet):
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[IsAuthenticated],
     )
     def subscriptions(self, request):
         user = request.user
@@ -120,7 +122,6 @@ class UserViewSet(ModelViewSet):
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[IsAuthenticated]
     )
     def me(self, request):
         serializer = UserSerializer(
@@ -205,7 +206,7 @@ class RecipeFilter(django_filters.FilterSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
@@ -240,7 +241,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         recipe = serializer.save()
         return Response(
-            RecipeReadSerializer(recipe, context={'request': request}).data
+            RecipeReadSerializer(recipe, context={'request': request}).data,
+            status=status.HTTP_200_OK
         )
 
     def partial_update(self, request, *args, **kwargs):
@@ -256,15 +258,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
         if request.method == 'POST':
-            ShoppingCart.objects.get_or_create(
-                user=user,
-                recipe=recipe
-            )
-            serializer = RecipeReadSerializer(
-                recipe,
+            serializer = ShoppingCartSerializer(
+                data={'recipe': recipe.id},
                 context={'request': request}
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if not serializer.is_valid():
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            serializer.save(user=user)
+            return Response(
+                RecipeShortSerializer(recipe, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
+            )
         if request.method == 'DELETE':
             ShoppingCart.objects.filter(
                 user=user,
@@ -323,15 +327,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
         if request.method == 'POST':
-            Favorite.objects.get_or_create(
-                user=user,
-                recipe=recipe
-            )
-            serializer = RecipeReadSerializer(
-                recipe,
+            serializer = FavoriteRecipeSerializer(
+                data={'recipe': recipe.id},
                 context={'request': request}
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if not serializer.is_valid():
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            serializer.save(user=user)
+            return Response(
+                RecipeShortSerializer(recipe, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
+            )
         Favorite.objects.filter(
             user=user,
             recipe=recipe
