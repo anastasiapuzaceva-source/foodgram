@@ -32,6 +32,7 @@ class UserAvatarSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -44,6 +45,11 @@ class UserSerializer(serializers.ModelSerializer):
             'avatar',
             'is_subscribed'
         )
+
+    def get_avatar(self, obj):
+        if hasattr(obj, 'avatar'):
+            return obj.avatar.avatar.url
+        return None
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
