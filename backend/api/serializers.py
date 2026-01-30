@@ -47,8 +47,8 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_avatar(self, obj):
-        if hasattr(obj, 'avatar'):
-            return obj.avatar.avatar.url
+        if obj.avatar:
+            return obj.avatar.url
         return None
 
     def get_is_subscribed(self, obj):
