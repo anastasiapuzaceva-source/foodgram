@@ -169,9 +169,8 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         )
 
     def get_avatar(self, obj):
-        request = self.context.get('request')
-        if obj.avatar and request:
-            return request.build_absolute_uri(obj.avatar.url)
+        if obj.avatar:
+            return obj.avatar.url
         return None
 
     def get_is_subscribed(self, obj):
