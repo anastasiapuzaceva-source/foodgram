@@ -6,7 +6,6 @@ from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import viewsets, status
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import (
@@ -15,8 +14,7 @@ from rest_framework.permissions import (
     AllowAny
 )
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from .filters import IngredientFilter, RecipeFilter
 from .permission import IsAuthorOrReadOnly
@@ -44,7 +42,6 @@ class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
     lookup_field = 'pk'
-
 
     @action(
         detail=False,

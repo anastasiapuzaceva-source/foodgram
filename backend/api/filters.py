@@ -2,7 +2,6 @@ from django_filters.rest_framework import (
     BooleanFilter,
     FilterSet,
     CharFilter,
-    ModelChoiceFilter,
     ModelMultipleChoiceFilter,
 )
 from django.shortcuts import get_object_or_404
@@ -10,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from recipe.models import Ingredient, Recipe, Tag
 
 User = get_object_or_404
+
 
 class IngredientFilter(FilterSet):
     name = CharFilter(

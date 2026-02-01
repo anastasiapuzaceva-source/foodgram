@@ -10,4 +10,5 @@ User = get_user_model()
 class UserAdmin(BaseUserAdmin):
     search_fields = ('email', 'username')
 
+
 admin.site.unregister(Group)

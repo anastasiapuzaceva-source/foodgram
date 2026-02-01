@@ -1,5 +1,6 @@
+import re
+
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import (
     UserCreateSerializer as DjoserUserCreateSerializer
@@ -13,8 +14,7 @@ from recipe.models import (
     Tag,
     RecipeIngredient,
     ShoppingCart,
-    Favorite,
-    UserRecipeRelation
+    Favorite
 )
 
 from .fields import Base64ImageField
@@ -102,6 +102,7 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
             raise serializers.ValidationError(
                 'Использовать username "me" запрещено.'
             )
+
 
 class UserSubscriptionSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
@@ -304,7 +305,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                 and request.user.is_authenticated
                 and Favorite.objects.filter(
             user=request.user,
-            recipe=obj
+            recipe=obj,
         ).exists()
         )
 
@@ -315,7 +316,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                 and request.user.is_authenticated
                 and ShoppingCart.objects.filter(
             user=request.user,
-            recipe=obj
+            recipe=obj,
         ).exists()
         )
 
