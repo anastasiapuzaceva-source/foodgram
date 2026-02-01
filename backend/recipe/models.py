@@ -148,8 +148,12 @@ class UserRecipeRelation(models.Model):
 
 
 class ShoppingCart(UserRecipeRelation):
-    pass
+    class Meta(UserRecipeRelation.Meta):
+        verbose_name = 'Корзина'
+        verbose_name_plural = 'Корзины'
 
 
 class Favorite(UserRecipeRelation):
-    pass
+    class Meta(UserRecipeRelation.Meta):
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные рецепты'
