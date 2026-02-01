@@ -1,17 +1,20 @@
 from django.contrib import admin
+from django.db.models import Count
 
 from .models import (
     Tag,
     Recipe,
     Ingredient,
-    ShoppingCart,
     RecipeIngredient,
+    ShoppingCart,
 )
 
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
     extra = 1
+    min_num = 1
+    validate_min = True
 
 
 @admin.register(Recipe)
@@ -22,9 +25,16 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('author__username', 'name')
     inlines = (RecipeIngredientInline,)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(favorites_total=Count('recipe_favorite'))
+
+    @admin.display(
+        description='Количество добавлений в избранное',
+        ordering='favorites_total'
+    )
     def favorites_count(self, obj):
-        return obj.favorited_by.count()
-    favorites_count.short_description = 'Количество добавлений в избранное'
+        return obj.favorites_total
 
 
 @admin.register(Ingredient)

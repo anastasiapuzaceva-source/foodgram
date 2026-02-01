@@ -93,3 +93,5 @@ http://localhost/
 
 **Anastasiia Puzacheva**
 GitHub: [https://github.com/anastasiapuzaceva-source](https://github.com/anastasiapuzaceva-source)
+
+Проект: [https://myfoodgram27.hopto.org/recipes](...)

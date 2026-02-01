@@ -4,19 +4,16 @@ from api.views import (
     TagViewSet,
     IngredientViewSet,
     RecipeViewSet,
-    UserAvatarView,
     UserViewSet,
 )
 
 router = DefaultRouter()
-router.register('custom_users', UserViewSet, basename='custom-users')
+router.register('users', UserViewSet)
 router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
 router.register('recipes', RecipeViewSet)
 
 urlpatterns = [
-    path('users/me/avatar/', UserAvatarView.as_view()),
     path('', include(router.urls)),
-    path('users/', include('djoser.urls')),
-    path('users/', include('djoser.urls.authtoken')),
+    path('auth/', include('djoser.urls.authtoken')),
 ]
