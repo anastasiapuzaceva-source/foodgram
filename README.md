@@ -87,6 +87,12 @@ http://localhost/
 .github/workflows/
 ```
 
+Для загрузки ингредиентов в базу данных используйте команду:
+```text
+docker compose exec backend python manage.py import_csv
+```
+
+
 ---
 
 ## Автор
@@ -94,4 +100,5 @@ http://localhost/
 **Anastasiia Puzacheva**
 GitHub: [https://github.com/anastasiapuzaceva-source](https://github.com/anastasiapuzaceva-source)
 
-Проект: [https://myfoodgram27.hopto.org/recipes](...)
+Проект: [https://myfoodgram27.hopto.org/recipes](https://myfoodgram27.hopto.org/recipes)
+

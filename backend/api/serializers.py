@@ -1,5 +1,3 @@
-import re
-
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from djoser.serializers import (
@@ -53,55 +51,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        return obj.subscribers.filter(user=request.user).exists()
+        return (request
+                and request.user.is_authenticated
+                and obj.subscribers.filter(user=request.user).exists()
+                )
 
     def get_shopping_cart_count(self, obj):
         return obj.shopping_cart.count()
-
-
-class UserCreateSerializer(DjoserUserCreateSerializer):
-    first_name = serializers.CharField(required=True)
-    last_name = serializers.CharField(required=True)
-    email = serializers.EmailField(
-        required=True,
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
-    username = serializers.CharField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
-
-    class Meta(DjoserUserCreateSerializer.Meta):
-        model = User
-        fields = (
-            'id',
-            'email',
-            'username',
-            'first_name',
-            'last_name',
-            'password',
-        )
-        extra_kwargs = {
-            'email': {'validators': []},
-            'username': {'validators': []},
-            'password': {'write_only': True},
-        }
-
-    def validate_username(self, value):
-        if not bool(re.match(r'^[\w.@+-]+$', value)):
-            raise serializers.ValidationError(
-                'Поле содержит недопустимые символы'
-            )
-
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                'Использовать username "me" запрещено.'
-            )
 
 
 class UserSubscriptionSerializer(UserSerializer):
@@ -126,12 +82,6 @@ class UserSubscriptionSerializer(UserSerializer):
         if obj.avatar:
             return obj.avatar.url
         return None
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        return obj.subscribers.filter(user=request.user).exists()
 
     def get_recipes(self, obj):
         request = self.context['request']
@@ -255,11 +205,10 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
         instance = super().update(instance, validated_data)
-        if tags is not None:
-            instance.tags.set(tags)
-        if ingredients_data is not None:
-            instance.ingredients.clear()
-            self._create_ingredients(instance, ingredients_data)
+        instance.tags.clear()
+        instance.tags.set(tags)
+        instance.ingredients.clear()
+        self._create_ingredients(instance, ingredients_data)
         return instance
 
     def to_representation(self, instance):
@@ -276,8 +225,14 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         many=True,
         source='recipe_ingredients'
     )
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField(
+        read_only=True,
+        default=False
+    )
+    is_in_shopping_cart = serializers.BooleanField(
+        read_only=True,
+        default=False
+    )
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -297,26 +252,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return obj.image.url
-
-    def get_is_favorited(self, obj):
-        request = self.context.get('request')
-        return (request
-                and request.user.is_authenticated
-                and Favorite.objects.filter(
-                    user=request.user,
-                    recipe=obj,
-                ).exists()
-                )
-
-    def get_is_in_shopping_cart(self, obj):
-        request = self.context.get('request')
-        return (request
-                and request.user.is_authenticated
-                and ShoppingCart.objects.filter(
-                    user=request.user,
-                    recipe=obj,
-                ).exists()
-                )
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):

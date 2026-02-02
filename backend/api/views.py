@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
+from django.db.models import Sum, Exists, OuterRef, Value, BooleanField
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -68,8 +68,6 @@ class UserViewSet(DjoserUserViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def subscribe(self, request, pk=None):
-        if not request.user.is_authenticated:
-            raise NotAuthenticated()
         user = request.user
         author = get_object_or_404(User, pk=pk)
         if request.method == 'POST':
@@ -127,9 +125,6 @@ class UserViewSet(DjoserUserViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def me(self, request):
-        if not request.user.is_authenticated:
-            raise NotAuthenticated()
-
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
@@ -151,7 +146,6 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -160,6 +154,31 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('create', 'update', 'partial_update'):
             return CreateRecipeSerializer
         return RecipeReadSerializer
+
+    def get_queryset(self):
+        queryset = Recipe.objects.all()
+
+        user = self.request.user
+        if not user.is_authenticated:
+            return queryset.annotate(
+                is_favorited=Value(False, output_field=BooleanField()),
+                is_in_shopping_cart=Value(False, output_field=BooleanField()),
+            )
+
+        return queryset.annotate(
+            is_favorited=Exists(
+                Favorite.objects.filter(
+                    user=user,
+                    recipe=OuterRef('pk')
+                )
+            ),
+            is_in_shopping_cart=Exists(
+                ShoppingCart.objects.filter(
+                    user=user,
+                    recipe=OuterRef('pk')
+                )
+            ),
+        )
 
     def _add_or_remove(
             self,

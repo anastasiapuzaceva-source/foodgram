@@ -96,6 +96,9 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         ordering = ('-created_at',)
 
+    def __str__(self):
+        return self.name
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
@@ -119,6 +122,13 @@ class RecipeIngredient(models.Model):
         verbose_name_plural = 'Ингредиенты рецепта'
         verbose_name = 'Ингредиент рецепта'
         ordering = ('recipe', 'ingredient__name')
+
+    def __str__(self):
+        return (
+            f'{self.ingredient.name} — {self.amount} '
+            f'{self.ingredient.measurement_unit} '
+            f'в рецепте "{self.recipe.name}"'
+        )
 
 
 class UserRecipeRelation(models.Model):
@@ -144,14 +154,23 @@ class UserRecipeRelation(models.Model):
             )
         ]
 
+    def __str__(self):
+        return f'{self.user} — {self.recipe}'
+
 
 class ShoppingCart(UserRecipeRelation):
     class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзины'
 
+    def __str__(self):
+        return f'{self.user} добавил в корзину "{self.recipe}"'
+
 
 class Favorite(UserRecipeRelation):
     class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные рецепты'
+
+    def __str__(self):
+        return f'{self.user} добавил в избранное "{self.recipe}"'

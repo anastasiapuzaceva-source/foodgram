@@ -30,6 +30,9 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
+    def __str__(self):
+        return self.username
+
 
 class Subscription(models.Model):
     user = models.ForeignKey(
@@ -58,3 +61,6 @@ class Subscription(models.Model):
         ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'
