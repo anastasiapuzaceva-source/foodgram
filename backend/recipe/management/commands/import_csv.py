@@ -9,6 +9,7 @@ from recipe.models import Ingredient
 DATA_DIR = Path(settings.BASE_DIR) / 'data'
 CSV_FILE = DATA_DIR / 'ingredients.csv'
 
+
 class Command(BaseCommand):
 
     help = 'Импорт данных Ingredient.'
