@@ -1,6 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import (
+    Exists,
+    OuterRef,
+    Value,
+    BooleanField
+)
 
 from .constants import (
     MEASUREMENT_MAX_LENGTH,
@@ -56,6 +62,36 @@ class Ingredient(models.Model):
         return f'{self.name} ({self.measurement_unit})'
 
 
+
+
+class RecipeQuerySet(models.QuerySet):
+    def with_user_flags(self, user):
+        if not user.is_authenticated:
+            return self.annotate(
+                is_favorited=Value(
+                    False, output_field=BooleanField()
+                ),
+                is_in_shopping_cart=Value(
+                    False, output_field=BooleanField()
+                ),
+            )
+
+        return self.annotate(
+            is_favorited=Exists(
+                Favorite.objects.filter(
+                    user=user,
+                    recipe=OuterRef('pk')
+                )
+            ),
+            is_in_shopping_cart=Exists(
+                ShoppingCart.objects.filter(
+                    user=user,
+                    recipe=OuterRef('pk')
+                )
+            ),
+        )
+
+
 class Recipe(models.Model):
     name = models.CharField(
         max_length=RECIPES_MAX_LENGTH,
@@ -90,6 +126,7 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Дата создания'
     )
+    objects = RecipeQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = 'Рецепты'

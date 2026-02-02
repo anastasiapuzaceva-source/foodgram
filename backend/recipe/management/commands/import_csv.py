@@ -24,10 +24,18 @@ class Command(BaseCommand):
         if not file_path.exists():
             self.stdout.write(self.style.ERROR('ingredients.csv не найден'))
             return
+        ingredients = []
         with file_path.open(encoding='utf-8') as f:
-            for row in csv.DictReader(f):
-                Ingredient.objects.get_or_create(
-                    name=row['name'],
-                    measurement_unit=row['measurement_unit']
+            reader = csv.DictReader(f)
+            for row in reader:
+                ingredients.append(
+                    Ingredient(
+                        name=row['name'],
+                        measurement_unit=row['measurement_unit']
+                    )
                 )
+        Ingredient.objects.bulk_create(
+            ingredients,
+            ignore_conflicts=True
+        )
         self.stdout.write(self.style.SUCCESS('Ингредиенты загружены.'))

@@ -100,5 +100,5 @@ sudo docker compose -f docker-compose.production.yml exec backend python manage.
 **Anastasiia Puzacheva**
 GitHub: [https://github.com/anastasiapuzaceva-source](https://github.com/anastasiapuzaceva-source)
 
-Проект: [https://myfoodgram27.hopto.org/recipes](https://myfoodgram27.hopto.org/recipes)
+Проект: [https://myfoodgram27.hopto.org](https://myfoodgram27.hopto.org)
 

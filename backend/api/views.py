@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Exists, OuterRef, Value, BooleanField
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -155,29 +155,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeReadSerializer
 
     def get_queryset(self):
-        queryset = Recipe.objects.all()
-
-        user = self.request.user
-        if not user.is_authenticated:
-            return queryset.annotate(
-                is_favorited=Value(False, output_field=BooleanField()),
-                is_in_shopping_cart=Value(False, output_field=BooleanField()),
-            )
-
-        return queryset.annotate(
-            is_favorited=Exists(
-                Favorite.objects.filter(
-                    user=user,
-                    recipe=OuterRef('pk')
-                )
-            ),
-            is_in_shopping_cart=Exists(
-                ShoppingCart.objects.filter(
-                    user=user,
-                    recipe=OuterRef('pk')
-                )
-            ),
-        )
+        return Recipe.objects.with_user_flags(self.request.user)
 
     def _add_or_remove(
             self,
