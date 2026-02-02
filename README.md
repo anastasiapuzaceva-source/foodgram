@@ -89,7 +89,7 @@ http://localhost/
 
 Для загрузки ингредиентов в базу данных используйте команду:
 ```text
-docker compose exec backend python manage.py import_csv
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py import_csv
 ```
 
 
