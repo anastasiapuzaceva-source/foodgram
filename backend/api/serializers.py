@@ -1,10 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from djoser.serializers import (
-    UserCreateSerializer as DjoserUserCreateSerializer
-)
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 from recipe.models import (
     Recipe,
