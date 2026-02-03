@@ -62,8 +62,6 @@ class Ingredient(models.Model):
         return f'{self.name} ({self.measurement_unit})'
 
 
-
-
 class RecipeQuerySet(models.QuerySet):
     def with_user_flags(self, user):
         if not user.is_authenticated:

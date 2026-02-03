@@ -164,4 +164,3 @@ DJOSER = {
 AUTH_USER_MODEL = 'users.User'
 
 PAGE_SIZE = 6
-

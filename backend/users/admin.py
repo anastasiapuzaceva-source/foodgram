@@ -19,4 +19,5 @@ class SubscriptionAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'author__email')
     list_filter = ('user', 'author')
 
+
 admin.site.unregister(Group)
