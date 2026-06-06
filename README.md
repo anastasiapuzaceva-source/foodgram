@@ -39,8 +39,8 @@ DB_HOST=db
 DB_PORT=5432
 DJANGO_SECRET_KEY=your_secret_key
 DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=localhost
-DJANGO_CSRF_TRUSTED_ORIGINS=https://myfoodgram27.hopto.org
+DJANGO_ALLOWED_HOSTS=127.0.0.1 localhost foodgram.toanastasija.com
+DJANGO_CSRF_TRUSTED_ORIGINS=https://foodgram.toanastasija.com
 ```
 
 ### 3. Запустить контейнеры
@@ -100,5 +100,5 @@ sudo docker compose -f docker-compose.production.yml exec backend python manage.
 **Anastasiia Puzacheva**
 GitHub: [https://github.com/anastasiapuzaceva-source](https://github.com/anastasiapuzaceva-source)
 
-Проект: [https://myfoodgram27.hopto.org](https://myfoodgram27.hopto.org)
+Проект: [https://foodgram.toanastasija.com](https://foodgram.toanastasija.com)
 
